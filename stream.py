@@ -9,8 +9,12 @@ import matplotlib.pyplot as plt
 # 1️⃣ 加载模型
 # =========================
 import os
+
+# 获取当前文件夹路径
 BASE_DIR = os.path.dirname(__file__)
 MODEL_PATH = os.path.join(BASE_DIR, "XGBmodel.pkl")
+
+# 加载模型
 model = joblib.load(MODEL_PATH)
 
 # =========================
