@@ -8,7 +8,9 @@ import matplotlib.pyplot as plt
 # =========================
 # 1️⃣ 加载模型
 # =========================
-MODEL_PATH = r"C:\Users\陈静仪\Desktop\RF_8features_Streamlit\XGBmodel.pkl"
+import os
+BASE_DIR = os.path.dirname(__file__)
+MODEL_PATH = os.path.join(BASE_DIR, "XGBmodel.pkl")
 model = joblib.load(MODEL_PATH)
 
 # =========================
