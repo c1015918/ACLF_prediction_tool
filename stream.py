@@ -6,9 +6,8 @@ import pandas as pd
 # =========================
 # 1️⃣ 加载模型
 # =========================
-MODEL_PATH = r"C:\Users\陈静仪\Desktop\RF_8features_Streamlit\XGBmodel.pkl"
+MODEL_PATH = "XGBmodel.pkl"
 model = joblib.load(MODEL_PATH)
-
 # =========================
 # 2️⃣ 定义特征（顺序必须和训练一致）
 # =========================
