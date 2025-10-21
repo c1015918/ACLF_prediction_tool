@@ -4,7 +4,8 @@ import numpy as np
 import pandas as pd
 import shap  # <- 一定要加
 import matplotlib.pyplot as plt
-
+import matplotlib.pyplot as plt
+plt.rcParams['text.usetex'] = False  # 禁用 LaTeX mathtext
 # =========================
 # 1️⃣ 加载模型
 # =========================
@@ -107,7 +108,7 @@ fig = shap.force_plot(
     feature_names=feature_names,
     matplotlib=True,
     show=False,
-    text_rotation=0
+    text_rotation=10
 )
 
 # 获取当前 Axes
@@ -120,9 +121,9 @@ for label in ax.get_xticklabels():
     label.set_fontsize(17)
 # 调整 FX 标签字体大小
 for text in ax.texts:
-    text.set_fontsize(16)  # FX 标签字体
+    text.set_fontsize(12)  # FX 标签字体
 # 调整布局：把图例往上移，避免遮住坐标轴
-plt.subplots_adjust(top=0.19, bottom=0.15, left=0.2, right=0.85)
+plt.subplots_adjust(top=0.16, bottom=0.15, left=0.2, right=0.85)
 
 import matplotlib.pyplot as plt
 plt.rcParams['text.usetex'] = False  # 禁用 LaTeX mathtext
