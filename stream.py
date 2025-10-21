@@ -70,7 +70,7 @@ if st.button("Predict"):
     # =========================
     # 5️⃣ SHAP 可解释性可视化
     # =========================
-    explainer = shap.TreeExplainer(model)
+    explainer = shap.TreeExplainer(model.get_booster())
     shap_values = explainer.shap_values(pd.DataFrame([list(user_input.values())], columns=feature_names))
 
     # 绘制 force plot 并保存为图片
