@@ -68,10 +68,11 @@ if st.button("Predict"):
     risk = "High Risk" if class1_prob / 100 >= threshold else "Low Risk"
     st.write(f"**Risk Assessment (Threshold {threshold:.3f}):** {risk}")
     # =========================
-    # 5️⃣ SHAP 可解释性可视化
-    # =========================
-    explainer = shap.TreeExplainer(model)
-    shap_values = explainer.shap_values(pd.DataFrame([feature_values], columns=feature_names))
-    shap.force_plot(explainer.expected_value, shap_values[0], pd.DataFrame([feature_values], columns=feature_names), matplotlib=True)
-    plt.savefig("shap_force_plot.png", bbox_inches='tight', dpi=1200)
-    st.image("shap_force_plot.png")
+    explainer = shap.Explainer(model)
+    shap_values = explainer(pd.DataFrame([feature_values], columns=feature_names))
+    # 可视化条形图
+    st.subheader("Feature Contributions")
+    fig, ax = plt.subplots()
+    shap.plots.bar(shap_values[0], max_display=len(feature_names), show=False)
+    st.pyplot(fig)
+
