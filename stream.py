@@ -124,10 +124,14 @@ for text in ax.texts:
 # 调整布局：把图例往上移，避免遮住坐标轴
 plt.subplots_adjust(top=0.19, bottom=0.15, left=0.2, right=0.85)
 
+import matplotlib.pyplot as plt
+plt.rcParams['text.usetex'] = False  # 禁用 LaTeX mathtext
+
 # 添加 base value 数值标注
 ax.axvline(base_value, color='gray', linestyle='--', linewidth=1)
-ax.text(base_value, ax.get_ylim()[1]*2.55, f'Base value: {base_value:.3f}', 
+ax.text(base_value, ax.get_ylim()[1]*2.55, f'Base value: {base_value:.3f} ←', 
         color='gray', fontsize=14, ha='center', va='top', backgroundcolor='white')
+
 
 # 保存图像
 plt.tight_layout()
