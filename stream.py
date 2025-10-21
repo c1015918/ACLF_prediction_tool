@@ -66,3 +66,18 @@ if st.button("Predict"):
     threshold = 0.365
     risk = "High Risk" if class1_prob / 100 >= threshold else "Low Risk"
     st.write(f"**Risk Assessment (Threshold {threshold:.3f}):** {risk}")
+    # =========================
+    # 5️⃣ SHAP 可解释性可视化
+    # =========================
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer.shap_values(pd.DataFrame([list(user_input.values())], columns=feature_names))
+
+    # 绘制 force plot 并保存为图片
+    shap.force_plot(
+        explainer.expected_value, 
+        shap_values[0], 
+        pd.DataFrame([list(user_input.values())], columns=feature_names), 
+        matplotlib=True
+    )
+    plt.savefig("shap_force_plot.png", bbox_inches='tight', dpi=1200)
+    st.image("shap_force_plot.png", caption="SHAP Force Plot: Feature Contribution")
