@@ -2,7 +2,8 @@ import streamlit as st
 import joblib
 import numpy as np
 import pandas as pd
-
+import shap
+import matplotlib.pyplot as plt
 # =========================
 # 1️⃣ 加载模型
 # =========================
