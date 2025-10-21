@@ -70,15 +70,8 @@ if st.button("Predict"):
     # =========================
     # 5️⃣ SHAP 可解释性可视化
     # =========================
-    explainer = shap.TreeExplainer(model.get_booster())
-    shap_values = explainer.shap_values(pd.DataFrame([list(user_input.values())], columns=feature_names))
-
-    # 绘制 force plot 并保存为图片
-    shap.force_plot(
-        explainer.expected_value, 
-        shap_values[0], 
-        pd.DataFrame([list(user_input.values())], columns=feature_names), 
-        matplotlib=True
-    )
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer.shap_values(pd.DataFrame([feature_values], columns=feature_names))
+    shap.force_plot(explainer.expected_value, shap_values[0], pd.DataFrame([feature_values], columns=feature_names), matplotlib=True)
     plt.savefig("shap_force_plot.png", bbox_inches='tight', dpi=1200)
-    st.image("shap_force_plot.png", caption="SHAP Force Plot: Feature Contribution")
+    st.image("shap_force_plot.png")
