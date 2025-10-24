@@ -156,182 +156,109 @@ if st.button(t["predict_button"]):
     st.write(f"**{t['risk_result']}（{t['threshold']} {threshold:.3f}）：** {risk}")
 
     st.info(t["disclaimer"])
-# =========================
-# =========================
 # 5️⃣ SHAP 可解释性可视化（点击按钮显示）
 # =========================
-# =========================
-import sys
-import os
+import matplotlib.pyplot as plt
+import shap
+import pandas as pd
+import streamlit as st
 
-# 计算 SHAP 值
-explainer = shap.TreeExplainer(model)
-sv = explainer.shap_values(pd.DataFrame([list(user_input.values())], columns=feature_names))
-# 创建按钮
+# =========================
 show_shap = st.button("Show SHAP Force Plot" if lang == "English" else "显示 SHAP 图")
 
 if show_shap:
+    # 构建输入数据
+    input_df = pd.DataFrame([list(user_input.values())], columns=feature_names)
+    
     # 计算 SHAP 值
     explainer = shap.TreeExplainer(model)
-    sv = explainer.shap_values(pd.DataFrame([list(user_input.values())], columns=feature_names))
-
-    # 二分类任务选择正类
-    if isinstance(sv, list):
-        shap_values = sv[1]  # 正类
-    else:
-        shap_values = sv
-
-    # 获取基准值
-    if isinstance(explainer.expected_value, list):
-        base_value = explainer.expected_value[1]
-    else:
-        base_value = explainer.expected_value
-
-    # 重定向标准输出屏蔽多余信息（可选）
-    sys.stdout = open(os.devnull, 'w')
-
-    # 当前样本 SHAP 值和特征原始值
-    shap_values_for_sample = shap_values[0]
-    original_values = pd.DataFrame([list(user_input.values())], columns=feature_names).iloc[0]
-
-    # 避免特殊字符被解析
-    original_values = original_values.astype(str)
-
+    sv = explainer.shap_values(input_df)
+    shap_values_for_sample = sv[1][0] if isinstance(sv, list) else sv[0]
+    
+    # 基准值和模型输出 f(x)
+    base_value = explainer.expected_value[1] if isinstance(explainer.expected_value, list) else explainer.expected_value
+    fx_value = base_value + shap_values_for_sample.sum()
+    
     # 绘图
-    plt.figure(figsize=(20, 18))  # 图形尺寸
-    fig = shap.force_plot(
+    plt.figure(figsize=(12, 10))
+    shap.force_plot(
         base_value,
         shap_values_for_sample,
-        original_values,
+        input_df.iloc[0],
         feature_names=feature_names,
         matplotlib=True,
-        show=False,
-        text_rotation=10
+        show=False
     )
-
-    # 获取当前 Axes
+    
     ax = plt.gca()
-
+    
+    # base value 虚线和数值
+    ax.axvline(base_value, color='gray', linestyle='--', linewidth=1)
+    ax.text(base_value, ax.get_ylim()[1]*1.05,
+            f'{base_value:.3f}', color='gray', fontsize=12,
+            ha='center', va='bottom', fontweight='bold')
+    
     # 调整字体大小
     for label in ax.get_yticklabels():
-        label.set_fontsize(17)
+        label.set_fontsize(14)
     for label in ax.get_xticklabels():
-        label.set_fontsize(17)
+        label.set_fontsize(14)
     for text in ax.texts:
-        text.set_fontsize(12)  # FX 标签字体
-
-    # 调整布局
-    plt.subplots_adjust(top=0.16, bottom=0.15, left=0.2, right=0.85)
-
-    # 添加 base value 数值标注
-    ax.axvline(base_value, color='gray', linestyle='--', linewidth=1)
-    ax.text(
-        base_value,
-        ax.get_ylim()[1]*2.55,
-        f'Base value: {base_value:.3f} ←',
-        color='gray',
-        fontsize=14,
-        ha='center',
-        va='top',
-        backgroundcolor='white'
-    )
-
-    # 保存图像
+        text.set_fontsize(11)
+    
     plt.tight_layout()
-    plt.savefig("shap_force_plot.png", bbox_inches='tight', dpi=1200)
-    plt.close()
+    st.pyplot(plt.gcf())
 
-    # 恢复标准输出
-    sys.stdout = sys.__stdout__
+    # =========================
+    # 力图说明
+    # =========================
+    if lang == "中文":
+        with st.expander("🧩 点击查看 SHAP 力图详细解释"):
+            st.markdown("""
+**SHAP 力图（SHAP Force Plot）** 用于解释单个样本的预测结果，展示每个特征对模型输出的影响。
 
-    # 在 Streamlit 展示图片
-    st.image("shap_force_plot.png")
-import streamlit as st
-import shap
-import numpy as np
-import xgboost as xgb
+**1️⃣ 基线值（Base Value）**  
+- 图中标记的 *base value* 表示模型的平均输出。  
 
-# ========== 模拟训练模型并生成 SHAP 值（仅示例） ==========
-# 你自己的模型可直接替换掉这部分
-X = np.random.rand(10, 5)
-y = np.random.randint(0, 2, 10)
-model = xgb.XGBClassifier().fit(X, y)
+**2️⃣ 模型输出值（f(x)）**  
+- 图中显示的 *f(x)* 值是该样本的最终预测结果。  
+- 它等于基线值加上所有特征的 SHAP 值：  
+  `f(x) = base value + Σ(SHAP_i)`  
 
-# 取一个样本用于展示 SHAP 力图
-explainer = shap.Explainer(model)
-shap_values = explainer(X)
+**3️⃣ 特征贡献（红色和蓝色箭头）**  
+- 🔴 **红色箭头**：对预测结果有正向贡献（推高预测值）。  
+- 🔵 **蓝色箭头**：对预测结果有负向贡献（降低预测值）。  
 
-# 取第一个样本示例
-sample_idx = 0
-base_value = explainer.expected_value
-sample_features = X[sample_idx]
-sample_shap_values = shap_values[sample_idx].values
+**4️⃣ 影响程度（箭头长度）**  
+- 箭头越长，说明该特征的 SHAP 值绝对值越大，对当前样本预测的影响越显著。  
 
-# ✅ 正确生成可显示的 HTML 版本（避免“Visualization omitted”错误）
-force_plot = shap.force_plot(
-    base_value,
-    sample_shap_values,
-    sample_features,
-    matplotlib=False
-)
-force_plot_html = f"<head>{shap.getjs()}</head><body>{force_plot.html()}</body>"
+**📘 总结**  
+- 左侧（蓝色）特征使模型预测值减小；  
+- 右侧（红色）特征使预测值增大；  
+- 中间的灰色虚线表示模型的平均预测水平。
+""")
+    else:
+        with st.expander("🧩 Click to view detailed SHAP Force Plot explanation"):
+            st.markdown("""
+**SHAP Force Plot** is used to interpret the prediction of an individual sample by showing how each feature contributes to the model output.
 
-# ✅ 使用顶部语言选择 lang 变量实现中英文切换
-# ===============================================
-# SHAP 力图详细解释（与主界面语言同步）
-# ===============================================
+**1️⃣ Base Value**  
+- The *base value* represents the model’s average output.  
 
-if lang == "中文":
-    with st.expander("🧩 点击查看 SHAP 力图详细解释"):
-        st.markdown("""
-        **SHAP 力图（SHAP Force Plot）** 用于解释单个样本的预测结果，展示了每个特征对模型输出的影响。
+**2️⃣ Model Output (f(x))**  
+- The *f(x)* indicates the final predicted value for this sample.  
+- It equals the base value plus the sum of all SHAP values:  
+  `f(x) = base value + Σ(SHAP_i)`  
 
-        **1️⃣ 基线值（Base Value）**  
-        - 图中标记的 *base value*（如 -0.592）表示模型的平均输出，也就是在没有任何特征影响时模型的预测值。  
-        - 它相当于模型在整个样本集上的“初始”预测水平。
+**3️⃣ Feature Contributions (Red and Blue Arrows)**  
+- 🔴 **Red arrows**: Features that push the prediction higher (positive contribution).  
+- 🔵 **Blue arrows**: Features that push the prediction lower (negative contribution).  
 
-        **2️⃣ 模型输出值（f(x)）**  
-        - 图中显示的 *f(x)* 值是该样本的最终预测结果。  
-        - 它等于基线值加上所有特征的 SHAP 值（贡献之和）：  
-          `f(x) = base value + Σ(SHAP_i)`
+**4️⃣ Magnitude of Impact (Arrow Length)**  
+- Longer arrows indicate features with larger absolute SHAP values, meaning stronger influence on the prediction.  
 
-        **3️⃣ 特征贡献（红色和蓝色箭头）**  
-        - 🔴 **红色箭头**：表示该特征对预测结果有**正向贡献**（推高预测值）。  
-        - 🔵 **蓝色箭头**：表示该特征对预测结果有**负向贡献**（降低预测值）。
-
-        **4️⃣ 影响程度（箭头长度）**  
-        - 箭头越长，说明该特征的 SHAP 值绝对值越大，对当前样本预测的影响越显著。  
-        - 例如，一个长的红色箭头表示该特征强烈地推动模型做出高风险预测。
-
-        **📘 总结**  
-        - 左侧（蓝色）特征使模型预测值减小；  
-        - 右侧（红色）特征使模型预测值增大；  
-        - 中间的灰色垂直线表示模型的平均预测水平。
-        """)
-else:
-    with st.expander("🧩 Click to view detailed SHAP Force Plot explanation"):
-        st.markdown("""
-        **SHAP Force Plot** is used to interpret the prediction of an individual sample by showing how each feature contributes to the model output.
-
-        **1️⃣ Base Value**  
-        - The *base value* (e.g., -0.592) represents the model’s average output when no features are applied.  
-        - It can be considered the model’s “starting point” prediction before adding feature effects.
-
-        **2️⃣ Model Output (f(x))**  
-        - The *f(x)* indicates the final predicted value for this sample.  
-        - It equals the base value plus the sum of all SHAP values (feature contributions):  
-          `f(x) = base value + Σ(SHAP_i)`
-
-        **3️⃣ Feature Contributions (Red and Blue Arrows)**  
-        - 🔴 **Red arrows**: Features that push the prediction higher (positive contribution).  
-        - 🔵 **Blue arrows**: Features that push the prediction lower (negative contribution).
-
-        **4️⃣ Magnitude of Impact (Arrow Length)**  
-        - Longer arrows represent features with larger absolute SHAP values, meaning stronger influence on the prediction.  
-        - For example, a long red arrow indicates a feature strongly driving the model toward a higher-risk prediction.
-
-        **📘 Summary**  
-        - Features on the **left (blue)** decrease the predicted value;  
-        - Features on the **right (red)** increase the predicted value;  
-        - The **gray vertical line** represents the model’s average output.
-        """)
+**📘 Summary**  
+- Features on the **left (blue)** decrease the predicted value;  
+- Features on the **right (red)** increase it;  
+- The **gray dashed line** represents the model’s average output.
+""")
